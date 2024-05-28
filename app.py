@@ -43,7 +43,7 @@ def main():
 
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
 
-    user_question = st.text_input("Ask a question:")
+    user_question = st.text_area("Ask a question:",height=200)
 
     # session state variable
     if 'chat_history' not in st.session_state:
