@@ -29,8 +29,8 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Chat with Groq!")
-    st.write("Hello! Let's start our conversation!")
+    st.title("Hello! Let's start our conversation!")
+    #st.write("Hello! Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
