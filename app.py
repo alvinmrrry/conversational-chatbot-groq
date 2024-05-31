@@ -30,7 +30,7 @@ def main():
 
     # The title and greeting message of the Streamlit application
     st.title("Welcome to this AI tool!")
-    #st.write("Hello! Let's start our conversation!")
+    st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
@@ -43,7 +43,7 @@ def main():
 
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
 
-    user_question = st.text_area("Let's talk. Please ask a question:",height=200)
+    user_question = st.text_area("Please ask a question:",height=200)
 
     # session state variable
     if 'chat_history' not in st.session_state:
