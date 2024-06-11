@@ -3,6 +3,8 @@ import os
 from groq import Groq
 import random
 
+from crewai import Agent, Task, Crew
+
 from langchain.chains import ConversationChain, LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
