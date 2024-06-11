@@ -57,7 +57,7 @@ jupyter_client==7.4.3
 jupyter_core==4.11.2
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.3
-langchain==0.1.5
+
 langchain-community==0.0.19
 langchain-core==0.1.21
 langchain-groq==0.0.1
@@ -153,4 +153,4 @@ widgetsnbextension==4.0.3
 yarl==1.9.4
 zipp==3.17.0
 crewai==0.30.11
-crewai-tools==0.2.6
+crewai-tools0.2.6
