@@ -10,7 +10,7 @@ asttokens==2.0.8
 async-timeout==4.0.3
 attrs==22.1.0
 backcall==0.2.0
-
+beautifulsoup4==4.11.1
 bleach==5.0.1
 blinker==1.7.0
 cachetools==5.3.2
@@ -57,7 +57,7 @@ jupyter_client==7.4.3
 jupyter_core==4.11.2
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.3
-
+langchain==0.1.5
 langchain-community==0.0.19
 langchain-core==0.1.21
 langchain-groq==0.0.1
@@ -81,7 +81,7 @@ nltk==3.8.1
 notebook==6.5.1
 notebook_shim==0.2.0
 numpy==1.23.4
-
+openai==1.12.0
 packaging==23.2
 pandas==1.5.1
 pandocfilters==1.5.0
@@ -152,5 +152,3 @@ websocket-client==1.4.1
 widgetsnbextension==4.0.3
 yarl==1.9.4
 zipp==3.17.0
-crewai==0.16.0
-crewai-tools==0.2.6
