@@ -152,4 +152,5 @@ websocket-client==1.4.1
 widgetsnbextension==4.0.3
 yarl==1.9.4
 zipp==3.17.0
-crewai
+crewai==0.30.11
+crewai-tools==0.2.6
