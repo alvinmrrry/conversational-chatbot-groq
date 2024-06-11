@@ -153,4 +153,3 @@ widgetsnbextension==4.0.3
 yarl==1.9.4
 zipp==3.17.0
 crewai
-'crewai[tools]'
