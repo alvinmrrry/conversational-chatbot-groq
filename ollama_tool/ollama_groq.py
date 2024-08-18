@@ -2,7 +2,7 @@ from groq import Groq
 import json
 
 
-client = Groq()
+client = Groq(api_key='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')
 MODEL = 'llama3-groq-70b-8192-tool-use-preview'
 
 
