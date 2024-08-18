@@ -1,8 +1,10 @@
 from groq import Groq
 import json
 
+
 client = Groq()
 MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+
 
 def calculate(expression):
     """Evaluate a mathematical expression"""
@@ -78,5 +80,5 @@ def run_conversation(user_prompt):
         )
         return second_response.choices[0].message.content
 
-user_prompt = "What is 25 * 4 + 23?"
+user_prompt = "What is 25 * 4 + 23/2?"
 print(run_conversation(user_prompt))
