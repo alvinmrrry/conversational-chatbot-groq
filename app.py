@@ -64,13 +64,6 @@ def main():
             model_name=model
     )
 
-
-    # Create a placeholder for the chatbot's answer
-    chatbot_answer_placeholder = st.empty()
-
-    # Create a placeholder for the previous answer
-    previous_answer_placeholder = st.empty()
-
     # If the user has asked a question,
     if user_question:
 
@@ -107,11 +100,11 @@ def main():
 
         # Display the previous answer
         if len(st.session_state.chat_history) > 1:
-            previous_answer_placeholder.markdown("---")
-            previous_answer_placeholder.write("Previous answer:")
-            previous_answer_placeholder.write("Chatbot:", st.session_state.chat_history[-2]['AI'])
+            # Separate the previous answer from the current answer
+            st.markdown("---")
+            st.write("Previous answer::", st.session_state.chat_history[-2]['AI'])
         else:
-            previous_answer_placeholder.write("")
+            st.write("")
 
 if __name__ == "__main__":
     main()
