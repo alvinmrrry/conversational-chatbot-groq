@@ -96,15 +96,23 @@ def main():
         response = conversation.predict(human_input=user_question)
         message = {'human':user_question,'AI':response}
         st.session_state.chat_history.append(message)
-        st.write("chatbot:\n\n", response)
+        # st.write("chatbot:\n", response)
 
-        # Display the previous answer
-        if len(st.session_state.chat_history) > 1:
-            # Separate the previous answer from the current answer
+        # # Display the previous answer
+        # if len(st.session_state.chat_history) > 1:
+        #     # Separate the previous answer from the current answer
+        #     st.markdown("---")
+        #     st.write("Previous answer:\n", st.session_state.chat_history[-2]['AI'])
+        # else:
+        #     st.write("")
+
+        # Display the entire chat history
+        # st.write("Chat History:")
+        for i, chat in enumerate(st.session_state.chat_history):
+            st.write(f"**Message {i}**")
+            st.write(f"**User:** {chat['human']}")
+            st.write(f"**AI:** {chat['AI']}")
             st.markdown("---")
-            st.write("Previous answer:\n\n", st.session_state.chat_history[-2]['AI'])
-        else:
-            st.write("")
 
 if __name__ == "__main__":
     main()
