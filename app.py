@@ -106,11 +106,12 @@ def main():
         # else:
         #     st.write("")
 
-        # Display the entire chat history
         for i, chat in enumerate(reversed(st.session_state.chat_history)):
-            # st.write(f"**Message {len(st.session_state.chat_history) - i - 1}**")
-            st.write(f"**User:** {chat['human']}")
-            st.write(f"**AI:** {chat['AI']}")
+            if i == 0:
+                st.write(f"**AI:** {chat['AI']}")
+            else:
+                st.write(f"**User:** {chat['human']}")
+                st.write(f"**AI:** {chat['AI']}")
             st.markdown("---")
 
 if __name__ == "__main__":
