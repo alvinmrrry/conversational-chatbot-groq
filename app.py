@@ -31,8 +31,8 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Welcome to this AI tool!")
-    st.write("Let's start our conversation!")
+    st.title("Welcome to my AI tool!")
+    # st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
@@ -96,13 +96,13 @@ def main():
         response = conversation.predict(human_input=user_question)
         message = {'human':user_question,'AI':response}
         st.session_state.chat_history.append(message)
-        st.write("chatbot:", response)
+        st.write("chatbot:\n", response)
 
         # Display the previous answer
         if len(st.session_state.chat_history) > 1:
             # Separate the previous answer from the current answer
             st.markdown("---")
-            st.write("Previous answer::", st.session_state.chat_history[-2]['AI'])
+            st.write("Previous answer:\n", st.session_state.chat_history[-2]['AI'])
         else:
             st.write("")
 
