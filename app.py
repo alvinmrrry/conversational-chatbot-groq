@@ -103,15 +103,11 @@ def main():
         response = conversation.predict(human_input=user_question)
         message = {'human':user_question,'AI':response}
         st.session_state.chat_history.append(message)
-
-        # Display the current answer
-        chatbot_answer_placeholder.write("Chatbot:", response)
-        
-        # Display a separator line
-        st.write("---------------")
+        st.write("chatbot:", response)
 
         # Display the previous answer
         if len(st.session_state.chat_history) > 1:
+            previous_answer_placeholder.markdown("---")
             previous_answer_placeholder.write("Previous answer:")
             previous_answer_placeholder.write("Chatbot:", st.session_state.chat_history[-2]['AI'])
         else:
