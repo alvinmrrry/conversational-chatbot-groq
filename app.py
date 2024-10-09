@@ -107,9 +107,8 @@ def main():
         #     st.write("")
 
         # Display the entire chat history
-        # st.write("Chat History:")
-        for i, chat in enumerate(st.session_state.chat_history):
-            st.write(f"**Message {i}**")
+        for i, chat in enumerate(reversed(st.session_state.chat_history)):
+            # st.write(f"**Message {len(st.session_state.chat_history) - i - 1}**")
             st.write(f"**User:** {chat['human']}")
             st.write(f"**AI:** {chat['AI']}")
             st.markdown("---")
