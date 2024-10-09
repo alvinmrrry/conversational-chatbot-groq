@@ -31,8 +31,8 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")
-    st.write("Let's start our conversation!")
+    # st.title("Welcome to my AI tool!")
+    # st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
@@ -107,7 +107,7 @@ def main():
         chat_history_placeholder.write(chat_history)
 
         # Update the session state
-        st.session_state.chat_history.append({'human': user_question, 'AI': response})
+        st.session_state.chat_history.append({'human': user_question, '\nAI': response})
 
 if __name__ == "__main__":
     main()
