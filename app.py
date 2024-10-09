@@ -32,7 +32,7 @@ def main():
 
     # The title and greeting message of the Streamlit application
     st.title("Welcome to my AI tool!")
-    # st.write("Let's start our conversation!")
+    st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
