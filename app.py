@@ -6,7 +6,7 @@ from langchain_core.prompts import (
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessagePromptTemplate
 
 Google_API_Key='AIzaSyDbsl4puS8xddMH0avmIpQqkbJuB1RAhUs'
 genai.configure(api_key=Google_API_Key)
