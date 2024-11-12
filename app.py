@@ -114,7 +114,7 @@ def main():
         #     st.markdown("---")
         #     st.write("Previous answer:\n", st.session_state.chat_history[-2]['AI'])
         # else:
-        st.write("Chatbot:\n", response_google)
+        st.write("Chatbot:\n", response_google.text)
 
         # for i, chat in enumerate(reversed(st.session_state.chat_history)):
         #     if i == 0:
