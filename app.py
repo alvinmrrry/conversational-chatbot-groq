@@ -1,3 +1,4 @@
+Google_API_Key='AIzaSyDbsl4puS8xddMH0avmIpQqkbJuB1RAhUs'
 import streamlit as st
 import google.generativeai as genai
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
@@ -5,11 +6,11 @@ from langchain.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
-    SystemMessagePromptTemplate
+    SystemMessagePromptTemplate,
 )
-from langchain_core.messages import SystemMessagePromptTemplate
 
-Google_API_Key='AIzaSyDbsl4puS8xddMH0avmIpQqkbJuB1RAhUs'
+# Load the Google API key securely
+# Google_API_Key = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=Google_API_Key)
 
 model_name = 'gemini-1.5-flash'
@@ -32,7 +33,6 @@ def main():
     )
     conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value=5)
 
-    # Initialize memory
     memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
 
     user_question = st.text_area("Please ask a question:", height=200)
