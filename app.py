@@ -33,7 +33,7 @@ def main():
     if user_question:
 
         try:
-            response_google = model.generate_content(user_question)
+            response_google = model.generate_content(user_question).text
             message = {'human':user_question,'AI':response_google}
             st.session_state.chat_history.append(message)
 
