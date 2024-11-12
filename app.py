@@ -5,16 +5,6 @@ import random
 
 # from crewai import Agent, Task, Crew
 
-Google_API_Key='AIzaSyDbsl4puS8xddMH0avmIpQqkbJuB1RAhUs'
-
-import google.generativeai as genai
-import os
-
-genai.configure(api_key=Google_API_Key)
-
-model = genai.GenerativeModel(model_name='gemini-1.5-flash')
-response_google = model.generate_content('what is a generative ai model? how it works?')
-
 from langchain.chains import ConversationChain, LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -114,15 +104,15 @@ def main():
         #     st.markdown("---")
         #     st.write("Previous answer:\n", st.session_state.chat_history[-2]['AI'])
         # else:
-        st.write("Chatbot:\n", response_google.text)
+        #     st.write("")
 
-        # for i, chat in enumerate(reversed(st.session_state.chat_history)):
-        #     if i == 0:
-        #         st.write(f"**Chatbot:** {chat['AI']}")
-        #     else:
-        #         st.write(f"**User:** {chat['human']}")
-        #         st.write(f"**Chatbot:** {chat['AI']}")
-        #     st.markdown("---")
+        for i, chat in enumerate(reversed(st.session_state.chat_history)):
+            if i == 0:
+                st.write(f"**Chatbot:** {chat['AI']}")
+            else:
+                st.write(f"**User:** {chat['human']}")
+                st.write(f"**Chatbot:** {chat['AI']}")
+            st.markdown("---")
 
 if __name__ == "__main__":
     main()
