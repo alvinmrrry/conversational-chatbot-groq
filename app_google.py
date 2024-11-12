@@ -13,7 +13,7 @@ import os
 genai.configure(api_key=Google_API_Key)
 
 model = genai.GenerativeModel(model_name='gemini-1.5-flash')
-response_google = model.generate_content('what is a generative ai model? how it works?')
+response_google = model.generate_content('Teach me about how an LLM works')
 
 from langchain.chains import ConversationChain, LLMChain
 from langchain_core.prompts import (
