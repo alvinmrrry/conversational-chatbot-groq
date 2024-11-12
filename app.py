@@ -1,15 +1,14 @@
 import streamlit as st
 import google.generativeai as genai
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-from langchain.prompts import (
+from langchain_core.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
-from langchain.messages import SystemMessagePromptTemplate
+from langchain_core.messages import SystemMessagePromptTemplate
 
-# It's better to load the API key from an environment variable for security reasons
-Google_API_Key = st.secrets["GOOGLE_API_KEY"]
+Google_API_Key='AIzaSyDbsl4puS8xddMH0avmIpQqkbJuB1RAhUs'
 genai.configure(api_key=Google_API_Key)
 
 model_name = 'gemini-1.5-flash'
