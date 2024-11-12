@@ -1,10 +1,11 @@
 import streamlit as st
 import google.generativeai as genai
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-from langchain_core.prompts import (
+from langchain.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
+    SystemMessagePromptTemplate
 )
 from langchain_core.messages import SystemMessagePromptTemplate
 
