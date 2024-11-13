@@ -10,10 +10,10 @@ from langchain.prompts import (
 )
 
 # Load the Google API key securely
-# Google_API_Key = st.secrets["GOOGLE_API_KEY"]
+Google_API_Key = st.secrets.get("GOOGLE_API_KEY", 'Your_API_Key_Here')  # Use secrets for production
 genai.configure(api_key=Google_API_Key)
 
-model_name = 'gemini-1.5-flash'
+model_name = 'gemini-1.5-flash'  # Default model name
 model = genai.GenerativeModel(model_name=model_name)
 
 def main():
@@ -37,7 +37,7 @@ def main():
 
     user_question = st.text_area("Please ask a question:", height=200)
 
-    # If the user has asked a question,
+    # If the user has asked a question
     if user_question:
         # Initialize session state variable
         if 'chat_history' not in st.session_state:
@@ -50,17 +50,22 @@ def main():
                 {'output': message['AI']}
             )
 
-        # Construct a chat prompt template using various components
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                SystemMessagePromptTemplate(content=system_prompt),
-                MessagesPlaceholder(variable_name="chat_history"),
-                HumanMessagePromptTemplate.from_template("{human_input}"),
-            ]
-        )
+        # Only create SystemMessagePromptTemplate if system_prompt is not empty
+        if system_prompt:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    SystemMessagePromptTemplate(content=system_prompt),
+                    MessagesPlaceholder(variable_name="chat_history"),
+                    HumanMessagePromptTemplate.from_template("{human_input}"),
+                ]
+            )
+        else:
+            st.error("System prompt cannot be empty.")
+            return
 
         # Initialize the model with the selected model name
-        model = genai.GenerativeModel(model_name=model_name)
+        if model_name != model.model_name:
+            model = genai.GenerativeModel(model_name=model_name)
 
         try:
             response_google = model.generate_content(user_question, prompt=prompt).text
