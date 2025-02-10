@@ -39,7 +39,7 @@ def main():
     system_prompt = st.sidebar.text_input("System prompt:")
     model = st.sidebar.selectbox(
         'Choose a model',
-        [ 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
+        [ 'deepseek-r1-distill-llama-70b-specdec','gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
     )
     conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value = 5)
 
