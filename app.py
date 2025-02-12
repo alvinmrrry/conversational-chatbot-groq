@@ -35,7 +35,7 @@ def save_sequence(number):
 def send_request(url, headers):
     try:
         response = requests.get(url, headers=headers, timeout=10)
-        response.encoding = 'utf-2'
+        response.encoding = 'utf-8'
         return response
     except requests.RequestException as e:
         print(f"请求错误：{e}")
@@ -43,7 +43,7 @@ def send_request(url, headers):
 
 def parse_page(response):
     soup = BeautifulSoup(response.text, 'html.parser')
-    news_items = soup.find_all('div', class_='xq_dl')  # 找到所有class为xq_dl的div
+    news_items = soup.find_all('div', class_='news_main')  # 找到所有class为xq_dl的div
     if not news_items:
         return None
     return news_items
@@ -52,7 +52,7 @@ def extract_info(news_items):
     news_list = []
     for item in news_items:
         # 提取标题
-        title = item.find('h2').text.strip() if item.find('h2') else "无标题"
+        title = item.find('dt').text.strip() if item.find('dt') else "无标题"
 
         # 提取发布时间（假设发布时间位于img后的元素）
         publish_time = item.find_next('img', src="/images/ico4.png")
@@ -118,7 +118,7 @@ def main():
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
         url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
-        empty_retries = 0  # 初始化空页面重试计数器
+        empty_retries = 1  # 初始化空页面重试计数器
 
         while True:
             st.info(f"Requesting: {url}")
