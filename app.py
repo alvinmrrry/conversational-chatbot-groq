@@ -35,7 +35,7 @@ def save_sequence(number):
 def send_request(url, headers):
     try:
         response = requests.get(url, headers=headers, timeout=10)
-        response.encoding = 'utf-8'
+        response.encoding = 'utf-2'
         return response
     except requests.RequestException as e:
         print(f"请求错误：{e}")
@@ -43,7 +43,7 @@ def send_request(url, headers):
 
 def parse_page(response):
     soup = BeautifulSoup(response.text, 'html.parser')
-    news_items = soup.find_all('div', class_='news_main')
+    news_items = soup.find_all('div', class_='xq_dl')  # 找到所有class为xq_dl的div
     if not news_items:
         return None
     return news_items
@@ -51,15 +51,27 @@ def parse_page(response):
 def extract_info(news_items):
     news_list = []
     for item in news_items:
-        title_tag = item.find('h2', class_='news-title')
-        title = title_tag.text.strip() if title_tag and title_tag.text else "无标题"
+        # 提取标题
+        title = item.find('h2').text.strip() if item.find('h2') else "无标题"
 
-        content_tag = item.find('p', class_='news-content')
-        content = content_tag.text.strip() if content_tag and content_tag.text else "无正文"
+        # 提取发布时间（假设发布时间位于img后的元素）
+        publish_time = item.find_next('img', src="/images/ico4.png")
+        if publish_time:
+            publish_time = publish_time.find_next(['span', 'div']).text.strip()
+        else:
+            publish_time = "无发布时间"
+
+        # 提取文章内容
+        content = item.find_next('div', class_='xq_con')
+        if content:
+            content_text = content.get_text(strip=True)
+        else:
+            content_text = "无正文"
 
         news_list.append({
             'title': title,
-            'content': content
+            'publish_time': publish_time,
+            'content': content_text
         })
     return news_list
 
@@ -161,7 +173,9 @@ def main():
             # Display each article and its summary
             st.subheader(f"Found {total} articles:")
             for i, article in enumerate(news_list):
-                st.subheader(f"Article {i+1}: {article['title']}")
+                st.subheader(f"Article {i+1}")
+                st.write(f"Title: {article['title']}")
+                st.write(f"Publish Time: {article['publish_time']}")
                 st.write(f"Content: {article['content'][:300]}...")  # Show first 300 characters
 
                 # Prepare the prompt for summarization
