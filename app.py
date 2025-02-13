@@ -146,9 +146,10 @@ def main():
 
     # Initialize conversation memory in Streamlit's session state
     if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, max_len=conversational_memory_length * 2)
+        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     # Update memory length based on slider
+    st.session_state.memory.llm = groq_chat # This line is necessary to pass the groq_chat object
     st.session_state.memory.max_len = conversational_memory_length * 2
 
 
