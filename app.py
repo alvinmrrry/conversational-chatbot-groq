@@ -224,7 +224,7 @@ def main():
                 with st.spinner("Summarizing articles..."):
                     article_summary = query_llm(f"Summarize the following articles:\n{article}", groq_chat, system_prompt, st.session_state.memory)
                     st.subheader("Article Summary:")
-                    st.write(article_summary.format_map.message.content)
+                    st.write(article_summary.startswith("</think>"))
                     time.sleep(120)
 
             # Save current number and prepare next URL
