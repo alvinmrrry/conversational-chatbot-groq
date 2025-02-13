@@ -18,7 +18,7 @@ from langchain.memory import ConversationBufferMemory
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 DEFAULT_URL = 'https://www.phirda.com/artilce_37852.html'
 SEQUENCE_FILE = 'sequence.txt'
-MAX_EMPTY_RETRIES = 5  # 设置最大重试次数为5次
+MAX_EMPTY_RETRIES = 2  # 设置最大重试次数为2次
 
 # Import config after defining constants that config might use
 import config
@@ -123,8 +123,8 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")  # Added Title
-    st.write("Let's start our conversation!")
+    # st.title("Welcome to my AI tool!")  # Added Title
+    st.header("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
