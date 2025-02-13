@@ -61,17 +61,32 @@ def parse_page(response):
 def extract_info(news_items):
     news_list = []
     for item in news_items:
-        title_tag = item.find('<title>')
-        title = title_tag.text.strip() if title_tag and title_tag.text else "无标题"
+        try:
+            # 提取标题
+            title = item.find('dt').text.strip() if item.find('dt') else "无标题"
 
-        content_tag = item.find('p', class_='news-content')
-        content = content_tag.text.strip() if content_tag and content_tag.text else "无正文"
+            # 提取发布时间（假设发布时间位于img后的元素）
+            publish_time = item.find_next('img', src="/images/ico4.png")
+            if publish_time:
+                publish_time = publish_time.find_next(['span', 'div']).text.strip()
+            else:
+                publish_time = "无发布时间"
 
-        news_list.append({
-            'title': title,
-            'content': content
-        })
-        st.write(f"标题：{title}")
+            # 提取文章内容
+            content = item.find_next('div', class_='xq_con')
+            if content:
+                content_text = content.get_text(strip=True)
+            else:
+                content_text = "无正文"
+
+            news_list.append({
+                'title': title,
+                'publish_time': publish_time,
+                'content': content_text
+            })
+        except Exception as e:
+            st.error(f"Error extracting info from news item: {e}")
+            continue
     return news_list
 
 def query_llm(user_question, groq_chat, system_prompt, memory):
@@ -108,7 +123,7 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    # st.title("Welcome to my AI tool!")  # Added Title
+    st.title("Welcome to my AI tool!")  # Added Title
     st.header("Let's start our conversation!")
 
     # Add customization options to the sidebar
@@ -141,8 +156,7 @@ def main():
 
     # Crawler Functionality - Button Activated
     with st.sidebar:
-        with st.form(key="crawler_form"): #Move the form to sidebar and add key
-            crawl_button = st.form_submit_button("News Summary")
+        crawl_button = st.button("News Summary")  # Outside of the form
 
     if crawl_button:
         headers = {'User-Agent': USER_AGENT}
@@ -150,8 +164,6 @@ def main():
         current_number = get_sequence()
         url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
         empty_retries = 0
-
-        all_article_content = ""  # Accumulate all article content
 
         while True:
             st.info(f"Requesting: {url}")
@@ -185,10 +197,9 @@ def main():
             else:
                 empty_retries = 0
 
-            news_list = extract_info(response)
-            total = len(news_list)
+            news_list = extract_info(news_items)
 
-            if total == 0:
+            if not news_list:
                 st.warning("No news articles found. Trying next sequence number.")
                 empty_retries += 1
                 if empty_retries >= MAX_EMPTY_RETRIES:
@@ -201,10 +212,13 @@ def main():
                     continue
             else:
                 empty_retries = 0
-
+            total = len(news_list)
             for article in news_list:
-                all_article_content += article['content'] + "\n\n"  # Append article content
 
+                with st.spinner("Summarizing articles..."):
+                    article_summary = query_llm(f"Summarize the following articles:\n{article}", groq_chat, system_prompt, st.session_state.memory)
+                    st.subheader("Article Summary:")
+                    st.write(article_summary)
 
             # Save current number and prepare next URL
             save_sequence(current_number + 1)
@@ -212,16 +226,6 @@ def main():
             url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
             st.info("Moving to next sequence number...")
             time.sleep(1)
-
-
-        # Summarize accumulated article content
-        if all_article_content:
-            with st.spinner("Summarizing articles..."):
-                article_summary = query_llm(f"Summarize the following articles:\n{all_article_content}", groq_chat, system_prompt, st.session_state.memory)
-                st.subheader("Article Summary:")
-                st.write(article_summary)
-        else:
-            st.warning("No articles were successfully crawled.")
 
 if __name__ == "__main__":
     main()
