@@ -69,6 +69,7 @@ def extract_info(news_items):
             publish_time = item.find_next('img', src="/images/ico4.png")
             if publish_time:
                 publish_time = publish_time.find_next(['span', 'div']).text.strip()
+                st.info(f"Publish time: {publish_time}")
             else:
                 publish_time = "无发布时间"
 
