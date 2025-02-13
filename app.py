@@ -123,7 +123,7 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")
+    st.title("Welcome to my AI tool!")  # Added Title
     st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
@@ -134,9 +134,6 @@ def main():
         ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
     )
 
-    # Memory Configuration in Sidebar
-    max_memory = st.sidebar.slider("Max Memory (Number of Turns)", min_value=1, max_value=10, value=3, step=1)
-
     # Initialize Groq Langchain chat object
     groq_chat = ChatGroq(
         groq_api_key=groq_api_key,
@@ -145,11 +142,7 @@ def main():
 
     # Initialize conversation memory in Streamlit's session state
     if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, max_len=max_memory*2) # each turn has 2 messages, human + AI
-
-    # Update memory length based on slider
-    st.session_state.memory.max_len = max_memory * 2
-
+        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     # User input area
     user_question = st.text_area("Please ask a question or enter your query here:", height=200)
@@ -161,10 +154,11 @@ def main():
             st.subheader("LLM Response:")
             st.write(llm_response)
 
-    # Add crawl button to sidebar. The form has been removed.
-    crawl_button = st.sidebar.button("Start Crawling and Summarizing") # Removed Form
-
     # Crawler Functionality - Button Activated
+    with st.sidebar:
+        with st.form(key="crawler_form"): #Move the form to sidebar and add key
+            crawl_button = st.form_submit_button("Start Crawling and Summarizing")
+
     if crawl_button:
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
