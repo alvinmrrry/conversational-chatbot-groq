@@ -120,38 +120,7 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")
-    st.write("Let's start our conversation!")
-
-    # Add customization options to the sidebar
-    st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
-    model = st.sidebar.selectbox(
-        'Choose a model',
-        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
-    )
-
-    # Initialize Groq Langchain chat object
-    groq_chat = ChatGroq(
-        groq_api_key=groq_api_key,
-        model_name=model
-    )
-
-    # Initialize conversation memory in Streamlit's session state
-    if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-    # User input area
-    st.header("AI Question Answering and News Summarization")
-    user_question = st.text_area("Please ask a question or enter your query here:", height=200)
-
-    # LLM Query Functionality - Immediate Response
-    if user_question:
-        with st.spinner("Generating response..."):
-            llm_response = query_llm(user_question, groq_chat, system_prompt, st.session_state.memory)
-            st.subheader("LLM Response:")
-            st.write(llm_response)
-
+    # st.title("Welcome to my AI tool!")
     # Create a form for the crawl button
     with st.form("crawler_form"):
         crawl_button = st.form_submit_button("Start Crawling and Summarizing")
@@ -236,6 +205,36 @@ def main():
         else:
             st.warning("No articles were successfully crawled.")
 
+    st.write("Let's start our conversation!")
+
+    # Add customization options to the sidebar
+    st.sidebar.title('Customization')
+    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
+    model = st.sidebar.selectbox(
+        'Choose a model',
+        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
+    )
+
+    # Initialize Groq Langchain chat object
+    groq_chat = ChatGroq(
+        groq_api_key=groq_api_key,
+        model_name=model
+    )
+
+    # Initialize conversation memory in Streamlit's session state
+    if "memory" not in st.session_state:
+        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+    # User input area
+    # st.header("AI Question Answering and News Summarization")
+    user_question = st.text_area("Please ask a question or enter your query here:", height=200)
+
+    # LLM Query Functionality - Immediate Response
+    if user_question:
+        with st.spinner("Generating response..."):
+            llm_response = query_llm(user_question, groq_chat, system_prompt, st.session_state.memory)
+            st.subheader("LLM Response:")
+            st.write(llm_response)
 
 if __name__ == "__main__":
     main()

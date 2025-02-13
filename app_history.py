@@ -1,11 +1,7 @@
 import streamlit as st
-import os
-from groq import Groq
-import random
+import config
 
-# from crewai import Agent, Task, Crew
-
-from langchain.chains import ConversationChain, LLMChain
+from langchain.chains import LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
@@ -14,8 +10,6 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
-
 
 def main():
     """
@@ -23,7 +17,8 @@ def main():
     """
 
     # Get Groq API key
-    groq_api_key = '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'
+    # groq_api_key = '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'
+    groq_api_key = config.GROQ_API_KEY
 
     # Display the Groq logo
     spacer, col = st.columns([5, 1])  
