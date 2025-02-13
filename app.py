@@ -180,14 +180,7 @@ def main():
 
     # Get Groq API key
     groq_api_key = config.GROQ_API_KEY
-
-    # Display the logos
-    spacer, col1, spacer2, col2, spacer3 = st.columns([1,1,0.2,1,1])
-    with col1:
-        st.image('groqcloud_darkmode.png') #Fixed size so it doesn't throw it off.
-    with col2:
-        st.image('gemini_logo.png')
-
+    
     # The title and greeting message of the Streamlit application
     st.title("Welcome to my AI tool!")
     st.header("Let's start our conversation!")
