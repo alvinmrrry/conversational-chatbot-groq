@@ -1,6 +1,5 @@
 import streamlit as st
-import os
-from config import GROQ_API_KEY
+import os, config
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -113,8 +112,8 @@ def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
-    groq_api_key = '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'
-    
+    groq_api_key = config.get_groq_api_key()
+
     # Display the Groq logo
     spacer, col = st.columns([5, 1])
     with col:
