@@ -12,7 +12,7 @@ from langchain_core.prompts import (
 )
 from langchain_core.messages import SystemMessage
 from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory  # Import other memory types
 
 # 配置
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
@@ -135,8 +135,7 @@ def main():
     )
 
     # Memory Configuration in Sidebar - Correct Slider Implementation
-    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value=5)
-
+    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 3, 20, value=5) # Adjust range as needed
 
     # Initialize Groq Langchain chat object
     groq_chat = ChatGroq(
@@ -146,12 +145,9 @@ def main():
 
     # Initialize conversation memory in Streamlit's session state
     if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-    # Update memory length based on slider
-    # st.session_state.memory.llm = groq_chat # This line is removed because llm is not a property
-    st.session_state.memory.max_len = conversational_memory_length * 2
-
+        st.session_state.memory = ConversationBufferMemory(llm=groq_chat, memory_key="chat_history", return_messages=True, max_history=conversational_memory_length)
+    #Update the memory length based on the slider
+    st.session_state.memory.max_history = conversational_memory_length
 
     # User input area
     user_question = st.text_area("Please ask a question or enter your query here:", height=200)
