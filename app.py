@@ -65,13 +65,17 @@ def extract_info(news_items):
             # 提取标题
             title = item.find('dt').text.strip() if item.find('dt') else "无标题"
 
-            # 提取发布时间（假设发布时间位于img后的元素）
-            publish_time = item.find_next('img', src="/images/ico4.png")
-            if publish_time:
-                publish_time = publish_time.find_next(['span', 'div']).text.strip()
+            # 提取发布时间
+            publish_time_img = item.find_next('img', src="/images/new_ico4.png") # Updated src
+            if publish_time_img:
+                publish_time_span = publish_time_img.find_next('span', class_='publish-date') # Updated selector
+                if publish_time_span:
+                    publish_time = publish_time_span.text.strip()
+                else:
+                    publish_time = "无发布时间 (span not found)"
                 st.write(f"Publish time: {publish_time}")
             else:
-                publish_time = "无发布时间"
+                publish_time = "无发布时间 (img not found)"
 
             # 提取文章内容
             content = item.find_next('div', class_='xq_con')
