@@ -118,6 +118,10 @@ def query_llm(user_question, groq_chat, system_prompt, memory):
         st.error(f"Error generating answer: {e}")
         return "Error generating answer."
 
+def remove_think_tags(text):
+    """Removes <think>...</think> tags from a string using regular expressions."""
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
 def main():
     """Main function to run the Streamlit app."""
 
@@ -223,6 +227,7 @@ def main():
 
                 with st.spinner("Summarizing articles..."):
                     article_summary = query_llm(f"Summarize the following articles:\n{article}", groq_chat, system_prompt, st.session_state.memory)
+                    article_summary = remove_think_tags(article_summary)
                     st.subheader("Article Summary:")
                     st.write(article_summary)
                     time.sleep(120)
