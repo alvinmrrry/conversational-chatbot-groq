@@ -61,7 +61,7 @@ def parse_page(response):
 def extract_info(news_items):
     news_list = []
     for item in news_items:
-        title_tag = item.find('h2', class_='news-title')
+        title_tag = item.find('<title>')
         title = title_tag.text.strip() if title_tag and title_tag.text else "无标题"
 
         content_tag = item.find('p', class_='news-content')
