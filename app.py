@@ -82,6 +82,7 @@ def extract_info(news_items):
             content = item.find_next('div', class_='xq_con')
             if content:
                 content_text = content.get_text(strip=True)
+                st.write(f"Content: {content_text}")
             else:
                 content_text = "无正文"
 
