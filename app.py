@@ -71,6 +71,7 @@ def extract_info(news_items):
                 publish_time_i = publish_time_img.find_parent('i')  # Go to the parent <i> tag
                 if publish_time_i:
                     publish_time = publish_time_i.text.replace(publish_time_img.decode(), '').strip() # Extract text AND remove the image
+                    st.write(f"title: {title}")
                     st.write(f"Publish time: {publish_time}")
                 else:
                     publish_time = "无发布时间 (<i> tag not found)"
