@@ -71,6 +71,7 @@ def extract_info(news_items):
             'title': title,
             'content': content
         })
+        st.write(f"标题：{title}")
     return news_list
 
 def query_llm(user_question, groq_chat, system_prompt, memory):
