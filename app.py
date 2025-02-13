@@ -61,32 +61,16 @@ def parse_page(response):
 def extract_info(news_items):
     news_list = []
     for item in news_items:
-        try:
-            # 提取标题
-            title = item.find('dt').text.strip() if item.find('dt') else "无标题"
+        title_tag = item.find('h2', class_='news-title')
+        title = title_tag.text.strip() if title_tag and title_tag.text else "无标题"
 
-            # 提取发布时间（假设发布时间位于img后的元素）
-            publish_time = item.find_next('img', src="/images/ico4.png")
-            if publish_time:
-                publish_time = publish_time.find_next(['span', 'div']).text.strip()
-            else:
-                publish_time = "无发布时间"
+        content_tag = item.find('p', class_='news-content')
+        content = content_tag.text.strip() if content_tag and content_tag.text else "无正文"
 
-            # 提取文章内容
-            content = item.find_next('div', class_='xq_con')
-            if content:
-                content_text = content.get_text(strip=True)
-            else:
-                content_text = "无正文"
-
-            news_list.append({
-                'title': title,
-                'publish_time': publish_time,
-                'content': content_text
-            })
-        except Exception as e:
-            st.error(f"Error extracting info from news item: {e}")
-            continue
+        news_list.append({
+            'title': title,
+            'content': content
+        })
     return news_list
 
 def query_llm(user_question, groq_chat, system_prompt, memory):
