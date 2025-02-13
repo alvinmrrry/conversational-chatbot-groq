@@ -121,9 +121,19 @@ def main():
 
     # The title and greeting message of the Streamlit application
     # st.title("Welcome to my AI tool!")
+    st.write("Let's start our conversation!")
+
+    # Add customization options to the sidebar
+    st.sidebar.title('Customization')
+    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
+    model = st.sidebar.selectbox(
+        'Choose a model',
+        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
+    )
+
     # Create a form for the crawl button
     with st.form("crawler_form"):
-        crawl_button = st.form_submit_button("Start Crawling and Summarizing")
+        crawl_button = st.sidebar.form_submit_button("Start Crawling and Summarizing")
 
     # Crawler Functionality - Button Activated
     if crawl_button:
@@ -204,16 +214,6 @@ def main():
                 st.write(article_summary)
         else:
             st.warning("No articles were successfully crawled.")
-
-    st.write("Let's start our conversation!")
-
-    # Add customization options to the sidebar
-    st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
-    model = st.sidebar.selectbox(
-        'Choose a model',
-        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
-    )
 
     # Initialize Groq Langchain chat object
     groq_chat = ChatGroq(
