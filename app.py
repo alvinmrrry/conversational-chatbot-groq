@@ -19,18 +19,22 @@ from langchain.prompts import PromptTemplate
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 DEFAULT_URL = 'https://www.phirda.com/artilce_37852.html'
 SEQUENCE_FILE = 'sequence.txt'
-MAX_EMPTY_RETRIES = 2  # 设置最大重试次数为5次
+MAX_EMPTY_RETRIES = 5  # 设置最大重试次数为5次
 
 def get_sequence():
     if os.path.exists(SEQUENCE_FILE):
         with open(SEQUENCE_FILE, 'r') as f:
-            return int(f.read())
+            try:
+                return int(f.read())
+            except ValueError:
+                st.error(f"Invalid sequence number in {SEQUENCE_FILE}. Resetting to 0.")
+                return 0
     else:
         return 0
 
 def save_sequence(number):
     with open(SEQUENCE_FILE, 'w') as f:
-        f.write(str(number - MAX_EMPTY_RETRIES + 1))
+        f.write(str(number))
 
 def send_request(url, headers):
     try:
@@ -38,54 +42,80 @@ def send_request(url, headers):
         response.encoding = 'utf-8'
         return response
     except requests.RequestException as e:
-        print(f"请求错误：{e}")
+        st.error(f"请求错误：{e}")
         return None
 
 def parse_page(response):
-    soup = BeautifulSoup(response.text, 'html.parser')
-    news_items = soup.find_all('div', class_='news_main')  # 找到所有class为xq_dl的div
-    if not news_items:
+    try:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        news_items = soup.find_all('div', class_='news_main')
+        if not news_items:
+            return None
+        return news_items
+    except Exception as e:
+        st.error(f"Error parsing page: {e}")
         return None
-    return news_items
 
 def extract_info(news_items):
     news_list = []
     for item in news_items:
-        # 提取标题
-        title = item.find('dt').text.strip() if item.find('dt') else "无标题"
+        try:
+            # 提取标题
+            title = item.find('dt').text.strip() if item.find('dt') else "无标题"
 
-        # 提取发布时间（假设发布时间位于img后的元素）
-        publish_time = item.find_next('img', src="/images/ico4.png")
-        if publish_time:
-            publish_time = publish_time.find_next(['span', 'div']).text.strip()
-        else:
-            publish_time = "无发布时间"
+            # 提取发布时间（假设发布时间位于img后的元素）
+            publish_time = item.find_next('img', src="/images/ico4.png")
+            if publish_time:
+                publish_time = publish_time.find_next(['span', 'div']).text.strip()
+            else:
+                publish_time = "无发布时间"
 
-        # 提取文章内容
-        content = item.find_next('div', class_='xq_con')
-        if content:
-            content_text = content.get_text(strip=True)
-        else:
-            content_text = "无正文"
+            # 提取文章内容
+            content = item.find_next('div', class_='xq_con')
+            if content:
+                content_text = content.get_text(strip=True)
+            else:
+                content_text = "无正文"
 
-        news_list.append({
-            'title': title,
-            'publish_time': publish_time,
-            'content': content_text
-        })
+            news_list.append({
+                'title': title,
+                'publish_time': publish_time,
+                'content': content_text
+            })
+        except Exception as e:
+            st.error(f"Error extracting info from news item: {e}")
+            continue
     return news_list
 
+def query_llm(user_question, groq_chat, system_prompt):
+    """Queries the LLM with the given question and returns the response."""
+    prompt = ChatPromptTemplate.from_messages([
+        SystemMessage(content=system_prompt),
+        HumanMessagePromptTemplate.from_template("{human_input}")
+    ])
+
+    conversation = LLMChain(
+        llm=groq_chat,
+        prompt=prompt,
+        verbose=False
+    )
+
+    try:
+        answer = conversation.predict(human_input=user_question)
+        return answer
+    except Exception as e:
+        st.error(f"Error generating answer: {e}")
+        return "Error generating answer."
+
 def main():
-    """
-    This function is the main entry point of the application. It sets up the Groq client, the Streamlit interface, and handles the chat interaction.
-    """
+    """Main function to run the Streamlit app."""
 
     # Get Groq API key
     groq_api_key = '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'
 
     # Display the Groq logo
-    spacer, col = st.columns([5, 1])  
-    with col:  
+    spacer, col = st.columns([5, 1])
+    with col:
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
@@ -94,31 +124,41 @@ def main():
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_input("System prompt:")
+    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
     model = st.sidebar.selectbox(
         'Choose a model',
-        [ 'deepseek-r1-distill-llama-70b','gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
+        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
     )
-
-    # User input area
-    st.header("News Crawler and Summarizer")
-    user_question = st.text_area("Please ask a question:", height=200)
 
     # Initialize Groq Langchain chat object and conversation
     groq_chat = ChatGroq(
-            groq_api_key=groq_api_key, 
-            model_name=model
+        groq_api_key=groq_api_key,
+        model_name=model
     )
+
+    # User input area
+    st.header("AI Question Answering and News Summarization")
+    user_question = st.text_area("Please ask a question or enter your query here:", height=200)
+
+    # LLM Query Functionality
+    if user_question:
+        with st.spinner("Generating response..."):
+            llm_response = query_llm(user_question, groq_chat, system_prompt)
+            st.subheader("LLM Response:")
+            st.write(llm_response)
 
     # Create a form for the crawl button
     with st.form("crawler_form"):
         crawl_button = st.form_submit_button("Start Crawling and Summarizing")
 
+    # Crawler Functionality
     if crawl_button:
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
         url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
-        empty_retries = 1  # 初始化空页面重试计数器
+        empty_retries = 0
+
+        all_article_content = ""  # Accumulate all article content
 
         while True:
             st.info(f"Requesting: {url}")
@@ -170,38 +210,27 @@ def main():
             else:
                 empty_retries = 0
 
-            # Display each article and its summary
-            st.subheader(f"Found {total} articles:")
-            for i, article in enumerate(news_list):
-                st.subheader(f"Article {i+1}")
-                st.write(f"Title: {article['title']}")
-                st.write(f"Publish Time: {article['publish_time']}")
-                st.write(f"Content: {article['content'][:300]}...")  # Show first 300 characters
+            for article in news_list:
+                all_article_content += article['content'] + "\n\n"  # Append article content
 
-                # Prepare the prompt for summarization
-                prompt = ChatPromptTemplate.from_messages([
-                    SystemMessage(content=system_prompt),
-                    HumanMessagePromptTemplate.from_template("{human_input}")
-                ])
-
-                # Create conversation chain
-                conversation = LLMChain(
-                    llm=groq_chat,
-                    prompt=prompt,
-                    verbose=True
-                )
-
-                # Generate summary
-                summary = conversation.predict(human_input=article['content'])
-                st.write(f"Summary: {summary}")
-                st.markdown("---")
 
             # Save current number and prepare next URL
-            save_sequence(current_number)
+            save_sequence(current_number + 1)
             current_number += 1
             url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
             st.info("Moving to next sequence number...")
             time.sleep(1)
+
+
+        # Summarize accumulated article content
+        if all_article_content:
+            with st.spinner("Summarizing articles..."):
+                article_summary = query_llm(f"Summarize the following articles:\n{all_article_content}", groq_chat, system_prompt)
+                st.subheader("Article Summary:")
+                st.write(article_summary)
+        else:
+            st.warning("No articles were successfully crawled.")
+
 
 if __name__ == "__main__":
     main()
