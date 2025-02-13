@@ -35,7 +35,7 @@ try:
     }
 
     gemini_model = genai.GenerativeModel(
-        model_name="gemini-1.5-pro-0514",  # Use correct name
+        model_name="gemini-2.0-flash",  # Use correct name
         generation_config=generation_config,
     )
 
@@ -180,7 +180,7 @@ def main():
 
     # Get Groq API key
     groq_api_key = config.GROQ_API_KEY
-    
+
     # The title and greeting message of the Streamlit application
     st.title("Welcome to my AI tool!")
     st.header("Let's start our conversation!")
