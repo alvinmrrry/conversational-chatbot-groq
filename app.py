@@ -134,7 +134,7 @@ def main():
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_area("System prompt:", value="You are an expert in industry areas, you knew market, products, service, solutions and compliance in specific fields.")
+    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
     model = st.sidebar.selectbox(
         'Choose a model',
         ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
