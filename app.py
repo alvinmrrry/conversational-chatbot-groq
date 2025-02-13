@@ -134,9 +134,8 @@ def main():
         ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
     )
 
-    # Memory Configuration in Sidebar - Correct Slider Implementation
-    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value=5)
-
+    # Memory Configuration in Sidebar
+    max_memory = st.sidebar.slider("Max Memory (Number of Turns)", min_value=1, max_value=10, value=3, step=1)
 
     # Initialize Groq Langchain chat object
     groq_chat = ChatGroq(
@@ -146,11 +145,10 @@ def main():
 
     # Initialize conversation memory in Streamlit's session state
     if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, max_len=max_memory*2) # each turn has 2 messages, human + AI
 
     # Update memory length based on slider
-    st.session_state.memory.llm = groq_chat # This line is necessary to pass the groq_chat object
-    st.session_state.memory.max_len = conversational_memory_length * 2
+    st.session_state.memory.max_len = max_memory * 2
 
 
     # User input area
