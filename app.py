@@ -13,7 +13,6 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
-from transformers import AutoTokenizer
 import google.generativeai as genai
 
 # Configuration
@@ -32,18 +31,17 @@ try:
         "temperature": 0.7,
         "top_p": 0.95,
         "top_k": 40,
-        "max_output_tokens": 10000, # Adjusted token limit
+        "max_output_tokens": 2048, # Adjusted token limit
     }
 
     gemini_model = genai.GenerativeModel(
         model_name="gemini-1.5-pro-0514",  # Use correct name
         generation_config=generation_config,
     )
-    tokenizer = AutoTokenizer.from_pretrained("google/gemini-1.5-pro-0514") #load gemini tokenizer
+
 except Exception as e:
     st.error(f"Error initializing Gemini: {e}")
     gemini_model = None
-    tokenizer = None
 
 def get_sequence():
     if os.path.exists(SEQUENCE_FILE):
@@ -115,34 +113,28 @@ def extract_info(news_items):
             continue
     return news_list
 
-def chunk_text(text, tokenizer, max_tokens): #Use Gemini tokenizer
-    """Splits text into chunks based on token count."""
-    if not tokenizer:
-        st.error("Tokenizer is not available. Cannot chunk text.")
-        return []  # Return an empty list if tokenizer is not available
-
-    tokens = tokenizer.encode(text)
+def chunk_text(text, chunk_size=3000): #Character instead of tokens.
+    """Splits text into chunks of approximately `chunk_size` characters."""
     chunks = []
-    for i in range(0, len(tokens), max_tokens):
-        chunk = tokens[i:i + max_tokens]
-        chunks.append(tokenizer.decode(chunk))  # Decode each chunk
+    for i in range(0, len(text), chunk_size):
+        chunks.append(text[i:i + chunk_size])
     return chunks
 
-def summarize_article(article_content, gemini_model, tokenizer, system_prompt="You are a helpful assistant that provides concise summaries of news articles.", max_chunk_tokens=2000): # Use Gemini model
+def summarize_article(article_content, gemini_model, system_prompt="You are a helpful assistant that provides concise summaries of news articles.", max_chunk_tokens=2000): #Removed the tokenizer since it is no longer used.
     """Summarizes a long article by chunking and combining summaries."""
-    if not gemini_model or not tokenizer:
-        st.error("Gemini model or tokenizer is unavailable. Cannot summarize article.")
-        return "Error: Gemini model or tokenizer unavailable."
+    if not gemini_model:
+        st.error("Gemini model unavailable. Cannot summarize article.")
+        return "Error: Gemini model unavailable."
 
     # Chunk the article
-    chunks = chunk_text(article_content, tokenizer, max_chunk_tokens)
+    chunks = chunk_text(article_content) #no tokenizer
     chunk_summaries = []
 
     # Summarize each chunk
     for i, chunk in enumerate(chunks):
         prompt = f"{system_prompt}\nSummarize this section of the article: {chunk}"
         try:
-            response = gemini_model.generate_content(prompt)  #Send to gemini
+            response = gemini_model.generate_content(prompt) #Send to Gemini
             chunk_summary = response.text
             chunk_summaries.append(chunk_summary)
         except Exception as e:
@@ -286,14 +278,16 @@ def main():
                     continue
 
             for article in news_list:
-                st.subheader(f"Article: {article['title']}") #Moved display earlier.
-                with st.spinner("Summarizing articles..."): #Give immediate feedback.
-                    if gemini_model and tokenizer:  # Check if both model and tokenizer are loaded
-                        final_summary = summarize_article(article['content'], gemini_model, tokenizer, system_prompt) # call Gemini
+                st.subheader(f"Article: {article['title']}")
+
+                with st.spinner("Summarizing articles..."):
+                    if gemini_model:  # Check if model is loaded
+                        final_summary = summarize_article(article['content'], gemini_model, system_prompt)
                         st.subheader("Article Summary:")
                         st.write(final_summary)
                     else:
-                        st.error("Gemini model or tokenizer failed to load. Cannot summarize.")
+                        st.error("Gemini model failed to load. Cannot summarize.")
+
                 st.markdown("---")
 
             # Save current number and prepare next URL
