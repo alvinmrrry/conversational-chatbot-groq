@@ -113,8 +113,8 @@ def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
-    groq_api_key = GROQ_API_KEY # Changed from Hardcoded key to Secrets key.
-
+    groq_api_key = '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'
+    
     # Display the Groq logo
     spacer, col = st.columns([5, 1])
     with col:
