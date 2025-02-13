@@ -114,7 +114,7 @@ def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
-    groq_api_key = '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'
+    groq_api_key = st.secrets["GROQ_API_KEY"] # Changed from Hardcoded key to Secrets key.
 
     # Display the Groq logo
     spacer, col = st.columns([5, 1])
@@ -139,8 +139,9 @@ def main():
         model_name=model
     )
 
-    # Initialize conversation memory
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    # Initialize conversation memory in Streamlit's session state
+    if "memory" not in st.session_state:
+        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
     # User input area
     st.header("AI Question Answering and News Summarization")
@@ -149,7 +150,7 @@ def main():
     # LLM Query Functionality - Immediate Response
     if user_question:
         with st.spinner("Generating response..."):
-            llm_response = query_llm(user_question, groq_chat, system_prompt, memory)
+            llm_response = query_llm(user_question, groq_chat, system_prompt, st.session_state.memory)
             st.subheader("LLM Response:")
             st.write(llm_response)
 
@@ -231,7 +232,7 @@ def main():
         # Summarize accumulated article content
         if all_article_content:
             with st.spinner("Summarizing articles..."):
-                article_summary = query_llm(f"Summarize the following articles:\n{all_article_content}", groq_chat, system_prompt, memory)
+                article_summary = query_llm(f"Summarize the following articles:\n{all_article_content}", groq_chat, system_prompt, st.session_state.memory)
                 st.subheader("Article Summary:")
                 st.write(article_summary)
         else:
