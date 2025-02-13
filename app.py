@@ -154,12 +154,11 @@ def main():
             st.subheader("LLM Response:")
             st.write(llm_response)
 
-
-    # Add crawl button to sidebar using a `with` block to directly place it in sidebar
-    with st.sidebar:
-        crawl_button = st.form_submit_button("Start Crawling and Summarizing", form_id="crawler_form")
-
     # Crawler Functionality - Button Activated
+    with st.sidebar:
+        with st.form(key="crawler_form"): #Move the form to sidebar and add key
+            crawl_button = st.form_submit_button("Start Crawling and Summarizing")
+
     if crawl_button:
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
