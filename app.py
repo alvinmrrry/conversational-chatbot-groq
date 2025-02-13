@@ -157,9 +157,10 @@ def main():
     # Crawler Functionality - Button Activated
     with st.sidebar:
         with st.form(key="crawler_form"): #Move the form to sidebar and add key
-            crawl_button = st.form_submit_button("Start Crawling and Summarizing")
+            crawl_button = st.form_submit_button("News Summary")
 
     if crawl_button:
+        headers = {'User-Agent': USER_AGENT}
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
         url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
@@ -169,7 +170,6 @@ def main():
 
         while True:
             st.info(f"Requesting: {url}")
-            headers = {'User-Agent': USER_AGENT}
             response = send_request(url, headers)
 
             if not response or response.status_code != 200:
