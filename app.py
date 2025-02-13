@@ -13,15 +13,37 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
+from transformers import AutoTokenizer
+import google.generativeai as genai
 
-# 配置
+# Configuration
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 DEFAULT_URL = 'https://www.phirda.com/artilce_37852.html'
 SEQUENCE_FILE = 'sequence.txt'
-MAX_EMPTY_RETRIES = 2  # 设置最大重试次数为2次
+MAX_EMPTY_RETRIES = 2  # 设置最大重试次数
 
-# Import config after defining constants that config might use
+# Import config (assuming it's still needed for other config values)
 import config
+
+# Initialize Gemini
+try:
+    genai.configure(api_key=config.GEMINI_API_KEY) # from secrets
+    generation_config = {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40,
+        "max_output_tokens": 10000, # Adjusted token limit
+    }
+
+    gemini_model = genai.GenerativeModel(
+        model_name="gemini-1.5-pro-0514",  # Use correct name
+        generation_config=generation_config,
+    )
+    tokenizer = AutoTokenizer.from_pretrained("google/gemini-1.5-pro-0514") #load gemini tokenizer
+except Exception as e:
+    st.error(f"Error initializing Gemini: {e}")
+    gemini_model = None
+    tokenizer = None
 
 def get_sequence():
     if os.path.exists(SEQUENCE_FILE):
@@ -66,13 +88,11 @@ def extract_info(news_items):
             title = item.find('dt').text.strip() if item.find('dt') else "无标题"
 
             # 提取发布时间
-            publish_time_img = item.find_next('img', src="/images/ico4.png")  # Find the img tag
+            publish_time_img = item.find_next('img', src="/images/ico4.png")
             if publish_time_img:
-                publish_time_i = publish_time_img.find_parent('i')  # Go to the parent <i> tag
+                publish_time_i = publish_time_img.find_parent('i')
                 if publish_time_i:
-                    publish_time = publish_time_i.text.replace(publish_time_img.decode(), '').strip() # Extract text AND remove the image
-                    st.write(f"title: {title}")
-                    st.write(f"Publish time: {publish_time}")
+                    publish_time = publish_time_i.text.replace(publish_time_img.decode(), '').strip()
                 else:
                     publish_time = "无发布时间 (<i> tag not found)"
             else:
@@ -82,7 +102,6 @@ def extract_info(news_items):
             content = item.find_next('div', class_='xq_con')
             if content:
                 content_text = content.get_text(strip=True)
-                st.write(f"Content: {content_text}")
             else:
                 content_text = "无正文"
 
@@ -96,8 +115,53 @@ def extract_info(news_items):
             continue
     return news_list
 
+def chunk_text(text, tokenizer, max_tokens): #Use Gemini tokenizer
+    """Splits text into chunks based on token count."""
+    if not tokenizer:
+        st.error("Tokenizer is not available. Cannot chunk text.")
+        return []  # Return an empty list if tokenizer is not available
+
+    tokens = tokenizer.encode(text)
+    chunks = []
+    for i in range(0, len(tokens), max_tokens):
+        chunk = tokens[i:i + max_tokens]
+        chunks.append(tokenizer.decode(chunk))  # Decode each chunk
+    return chunks
+
+def summarize_article(article_content, gemini_model, tokenizer, system_prompt="You are a helpful assistant that provides concise summaries of news articles.", max_chunk_tokens=2000): # Use Gemini model
+    """Summarizes a long article by chunking and combining summaries."""
+    if not gemini_model or not tokenizer:
+        st.error("Gemini model or tokenizer is unavailable. Cannot summarize article.")
+        return "Error: Gemini model or tokenizer unavailable."
+
+    # Chunk the article
+    chunks = chunk_text(article_content, tokenizer, max_chunk_tokens)
+    chunk_summaries = []
+
+    # Summarize each chunk
+    for i, chunk in enumerate(chunks):
+        prompt = f"{system_prompt}\nSummarize this section of the article: {chunk}"
+        try:
+            response = gemini_model.generate_content(prompt)  #Send to gemini
+            chunk_summary = response.text
+            chunk_summaries.append(chunk_summary)
+        except Exception as e:
+            st.error(f"Error summarizing chunk {i+1}: {e}. Retrying with a smaller chunk size")
+            return f"Error with the API: {e}" #Give an error to avoid another error.
+
+    # Combine the summaries
+    combined_summary_prompt = f"{system_prompt}\nCombine these summaries into a single, concise summary of the entire article:\n" + "\n".join(chunk_summaries)
+
+    try:
+        response = gemini_model.generate_content(combined_summary_prompt) #Send to Gemini
+        final_summary = response.text
+        return final_summary
+    except Exception as e:
+        st.error(f"Error creating final summary: {e}")
+        return "Error summarizing article"
+
 def query_llm(user_question, groq_chat, system_prompt, memory):
-    """Queries the LLM with the given question and returns the response."""
+    """Queries the Groq LLM with the given question and returns the response."""
     prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content=system_prompt),
         MessagesPlaceholder(variable_name="chat_history"),
@@ -118,26 +182,30 @@ def query_llm(user_question, groq_chat, system_prompt, memory):
         st.error(f"Error generating answer: {e}")
         return "Error generating answer."
 
+
 def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
     groq_api_key = config.GROQ_API_KEY
 
-    # Display the Groq logo
-    spacer, col = st.columns([5, 1])
-    with col:
-        st.image('groqcloud_darkmode.png')
+    # Display the logos
+    spacer, col1, spacer2, col2, spacer3 = st.columns([1,1,0.2,1,1])
+    with col1:
+        st.image('groqcloud_darkmode.png') #Fixed size so it doesn't throw it off.
+    with col2:
+        st.image('gemini_logo.png')
 
-    # st.title("Welcome to my AI tool!")  # Added Title
+    # The title and greeting message of the Streamlit application
+    st.title("Welcome to my AI tool!")
     st.header("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
     system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
     model = st.sidebar.selectbox(
-        'Choose a model',
-        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
+        'Choose a Groq model',
+        ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192'] #Groq model
     )
 
     # Initialize Groq Langchain chat object
@@ -153,7 +221,7 @@ def main():
     # User input area
     user_question = st.text_area("Please ask a question or enter your query here:", height=200)
 
-    # LLM Query Functionality - Immediate Response
+    # LLM Query Functionality - Immediate Response (using Groq)
     if user_question:
         with st.spinner("Generating response..."):
             llm_response = query_llm(user_question, groq_chat, system_prompt, st.session_state.memory)
@@ -162,7 +230,7 @@ def main():
 
     # Crawler Functionality - Button Activated
     with st.sidebar:
-        crawl_button = st.button("News Summary")  # Outside of the form
+        crawl_button = st.button("News Summary")
 
     if crawl_button:
         headers = {'User-Agent': USER_AGENT}
@@ -216,15 +284,17 @@ def main():
                     current_number += 1
                     url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
                     continue
-            else:
-                empty_retries = 0
-            total = len(news_list)
-            for article in news_list:
 
-                with st.spinner("Summarizing articles..."):
-                    article_summary = query_llm(f"Summarize the following articles:\n{article}", groq_chat, system_prompt, st.session_state.memory)
-                    st.subheader("Article Summary:")
-                    st.write(article_summary)
+            for article in news_list:
+                st.subheader(f"Article: {article['title']}") #Moved display earlier.
+                with st.spinner("Summarizing articles..."): #Give immediate feedback.
+                    if gemini_model and tokenizer:  # Check if both model and tokenizer are loaded
+                        final_summary = summarize_article(article['content'], gemini_model, tokenizer, system_prompt) # call Gemini
+                        st.subheader("Article Summary:")
+                        st.write(final_summary)
+                    else:
+                        st.error("Gemini model or tokenizer failed to load. Cannot summarize.")
+                st.markdown("---")
 
             # Save current number and prepare next URL
             save_sequence(current_number + 1)
