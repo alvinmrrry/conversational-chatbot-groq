@@ -112,7 +112,7 @@ def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
-    groq_api_key = config.get_groq_api_key()
+    groq_api_key = config.GROQ_API_KEY
 
     # Display the Groq logo
     spacer, col = st.columns([5, 1])
