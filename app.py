@@ -129,8 +129,7 @@ def main():
     with col:
         st.image('groqcloud_darkmode.png')
 
-    # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")  # Added Title
+    # st.title("Welcome to my AI tool!")  # Added Title
     st.header("Let's start our conversation!")
 
     # Add customization options to the sidebar
