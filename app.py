@@ -1,11 +1,11 @@
 import streamlit as st
 import os
+from config import GROQ_API_KEY
 import requests
 from bs4 import BeautifulSoup
 import time
 import re
-import random
-from langchain.chains import ConversationChain, LLMChain
+from langchain.chains import LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
@@ -13,7 +13,6 @@ from langchain_core.prompts import (
 )
 from langchain_core.messages import SystemMessage
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
 
 # 配置
@@ -114,7 +113,7 @@ def main():
     """Main function to run the Streamlit app."""
 
     # Get Groq API key
-    groq_api_key = st.secrets["GROQ_API_KEY"] # Changed from Hardcoded key to Secrets key.
+    groq_api_key = GROQ_API_KEY # Changed from Hardcoded key to Secrets key.
 
     # Display the Groq logo
     spacer, col = st.columns([5, 1])
