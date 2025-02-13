@@ -230,7 +230,7 @@ def main():
             save_sequence(current_number + 1)
             current_number += 1
             url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
-            st.info("Moving to next sequence number...")
+            # st.info("Moving to next sequence number...")
             time.sleep(1)
 
 if __name__ == "__main__":
