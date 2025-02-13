@@ -18,7 +18,7 @@ from langchain.memory import ConversationBufferMemory
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 DEFAULT_URL = 'https://www.phirda.com/artilce_37852.html'
 SEQUENCE_FILE = 'sequence.txt'
-MAX_EMPTY_RETRIES = 2  # 设置最大重试次数为2次
+MAX_EMPTY_RETRIES = 5  # 设置最大重试次数为5次
 
 # Import config after defining constants that config might use
 import config
@@ -123,16 +123,20 @@ def main():
         st.image('groqcloud_darkmode.png')
 
     # The title and greeting message of the Streamlit application
-    # st.title("Welcome to my AI tool!")  # Added Title
-    st.header("Let's start our conversation!")
+    st.title("Welcome to my AI tool!")
+    st.write("Let's start our conversation!")
 
     # Add customization options to the sidebar
     st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant.")
+    system_prompt = st.sidebar.text_area("System prompt:", value="You are a helpful assistant that provides concise summaries of news articles.")
     model = st.sidebar.selectbox(
         'Choose a model',
         ['deepseek-r1-distill-llama-70b', 'gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
     )
+
+    # Memory Configuration in Sidebar - Correct Slider Implementation
+    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value=5)
+
 
     # Initialize Groq Langchain chat object
     groq_chat = ChatGroq(
@@ -144,6 +148,11 @@ def main():
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
+    # Update memory length based on slider
+    st.session_state.memory.llm = groq_chat # This line is necessary to pass the groq_chat object
+    st.session_state.memory.max_len = conversational_memory_length * 2
+
+
     # User input area
     user_question = st.text_area("Please ask a question or enter your query here:", height=200)
 
@@ -154,22 +163,19 @@ def main():
             st.subheader("LLM Response:")
             st.write(llm_response)
 
-    # Crawler Functionality - Button Activated
-    with st.sidebar:
-        with st.form(key="crawler_form"): #Move the form to sidebar and add key
-            crawl_button = st.form_submit_button("News Summary")
+    # Add crawl button to sidebar. The form has been removed.
+    crawl_button = st.sidebar.button("Start Crawling and Summarizing") # Removed Form
 
+    # Crawler Functionality - Button Activated
     if crawl_button:
-        headers = {'User-Agent': USER_AGENT}
         st.info("Starting to crawl news articles...")
         current_number = get_sequence()
         url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
         empty_retries = 0
 
-        all_article_content = ""  # Accumulate all article content
-
         while True:
             st.info(f"Requesting: {url}")
+            headers = {'User-Agent': USER_AGENT}
             response = send_request(url, headers)
 
             if not response or response.status_code != 200:
@@ -214,11 +220,21 @@ def main():
                     current_number += 1
                     url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
                     continue
-            else:
-                empty_retries = 0
 
-            for article in news_list:
-                all_article_content += article['content'] + "\n\n"  # Append article content
+            for i, article in enumerate(news_list):
+                st.subheader(f"Article {i+1}: {article['title']}")
+                st.write(f"Publish Time: {article['publish_time']}")
+                st.write(f"Content Preview: {article['content'][:200]}...")
+
+                with st.spinner(f"Summarizing Article {i+1}..."):
+                    article_summary = query_llm(
+                        f"Summarize the following article:\n{article['content']}",
+                        groq_chat,
+                        system_prompt,
+                        st.session_state.memory
+                    )
+                    st.write(f"**Summary:** {article_summary}")
+                st.markdown("---")
 
 
             # Save current number and prepare next URL
@@ -227,16 +243,6 @@ def main():
             url = re.sub(r'\d+', str(current_number), DEFAULT_URL)
             st.info("Moving to next sequence number...")
             time.sleep(1)
-
-
-        # Summarize accumulated article content
-        if all_article_content:
-            with st.spinner("Summarizing articles..."):
-                article_summary = query_llm(f"Summarize the following articles:\n{all_article_content}", groq_chat, system_prompt, st.session_state.memory)
-                st.subheader("Article Summary:")
-                st.write(article_summary)
-        else:
-            st.warning("No articles were successfully crawled.")
 
 if __name__ == "__main__":
     main()
