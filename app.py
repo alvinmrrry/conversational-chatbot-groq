@@ -13,6 +13,7 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
+from transformers import AutoTokenizer
 
 # 配置
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
@@ -22,6 +23,13 @@ MAX_EMPTY_RETRIES = 2  # 设置最大重试次数为2次
 
 # Import config after defining constants that config might use
 import config
+
+# Initialize tokenizer globally
+try:
+    tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-v0.1")
+except Exception as e:
+    st.error(f"Error loading tokenizer: {e}")
+    tokenizer = None # Make sure tokenizer is None if it fails to load
 
 def get_sequence():
     if os.path.exists(SEQUENCE_FILE):
@@ -71,8 +79,6 @@ def extract_info(news_items):
                 publish_time_i = publish_time_img.find_parent('i')  # Go to the parent <i> tag
                 if publish_time_i:
                     publish_time = publish_time_i.text.replace(publish_time_img.decode(), '').strip() # Extract text AND remove the image
-                    st.write(f"title: {title}")
-                    st.write(f"Publish time: {publish_time}")
                 else:
                     publish_time = "无发布时间 (<i> tag not found)"
             else:
@@ -82,7 +88,6 @@ def extract_info(news_items):
             content = item.find_next('div', class_='xq_con')
             if content:
                 content_text = content.get_text(strip=True)
-                st.write(f"Content: {content_text}")
             else:
                 content_text = "无正文"
 
@@ -95,6 +100,15 @@ def extract_info(news_items):
             st.error(f"Error extracting info from news item: {e}")
             continue
     return news_list
+
+def chunk_text(text, tokenizer, max_tokens):
+    """Splits text into chunks based on token count."""
+    tokens = tokenizer.encode(text, return_attention_mask=False)
+    chunks = []
+    for i in range(0, len(tokens), max_tokens):
+        chunk = tokens[i:i + max_tokens]
+        chunks.append(tokenizer.decode(chunk, skip_special_tokens=True))  # Decode each chunk
+    return chunks
 
 def query_llm(user_question, groq_chat, system_prompt, memory):
     """Queries the LLM with the given question and returns the response."""
@@ -117,6 +131,37 @@ def query_llm(user_question, groq_chat, system_prompt, memory):
     except Exception as e:
         st.error(f"Error generating answer: {e}")
         return "Error generating answer."
+
+def summarize_article(article_content, groq_chat, system_prompt, tokenizer, max_chunk_tokens=4000):
+    """Summarizes a long article by chunking and combining summaries."""
+
+    if not tokenizer:
+        st.error("Tokenizer failed to load. Cannot summarize article.")
+        return "Error: Tokenizer unavailable."
+
+    # Chunk the article
+    chunks = chunk_text(article_content, tokenizer, max_chunk_tokens)
+    chunk_summaries = []
+
+    # Summarize each chunk
+    for i, chunk in enumerate(chunks):
+        prompt = f"Summarize this section of the article: {chunk}"
+        try:
+            chunk_summary = query_llm(prompt, groq_chat, system_prompt, None)  # Use temporary memory
+            chunk_summaries.append(chunk_summary)
+        except Exception as e:
+            st.error(f"Error summarizing chunk {i+1}: {e}")
+            return "Error summarizing article"
+
+    # Combine the summaries
+    combined_summary_prompt = f"Combine these summaries into a single, concise summary of the entire article:\n" + "\n".join(chunk_summaries)
+    try:
+        final_summary = query_llm(combined_summary_prompt, groq_chat, system_prompt, None)  # Or memory if needed
+        return final_summary
+    except Exception as e:
+        st.error(f"Error creating final summary: {e}")
+        return "Error summarizing article"
+
 
 def main():
     """Main function to run the Streamlit app."""
@@ -219,13 +264,14 @@ def main():
                     continue
             else:
                 empty_retries = 0
-            total = len(news_list)
-            for article in news_list:
 
+            for article in news_list:
+                st.write(f"title: {article['title']}")
+                st.write(f"content: {article['content']}")
                 with st.spinner("Summarizing articles..."):
-                    article_summary = query_llm(f"Summarize the following articles:\n{article}", groq_chat, system_prompt, st.session_state.memory)
+                    final_summary = summarize_article(article['content'], groq_chat, system_prompt, tokenizer)
                     st.subheader("Article Summary:")
-                    st.write(article_summary)
+                    st.write(final_summary)
 
             # Save current number and prepare next URL
             save_sequence(current_number + 1)
