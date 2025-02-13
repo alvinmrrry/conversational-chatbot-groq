@@ -185,7 +185,7 @@ def main():
             else:
                 empty_retries = 0
 
-            news_list = extract_info(news_items)
+            news_list = extract_info(response)
             total = len(news_list)
 
             if total == 0:
