@@ -34,7 +34,7 @@ def main():
 
     # Get model selection
     st.header("Select a model")
-    model_options = ["llama3-70b-8192"]
+    model_options = ["llama3-70b-8192","llama-3.3-70b-versatile"]
     model = st.selectbox("Model", options=model_options)
 
     # Get chat completion
