@@ -1,113 +1,85 @@
+import base64
+import os
 import streamlit as st
-import config
+from google import genai
+from google.genai import types
+import tempfile
 
-from langchain.chains import LLMChain
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain_core.messages import SystemMessage
-from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-from langchain_groq import ChatGroq
+def generate_response(image_file, prompt):
+    try:
+        client = genai.Client(
+            api_key='AIzaSyDBvuL_-rHm8M9Vi-YOYqnbSs0Wcj3gVLA',
+        )
+
+        # Create a temporary file to upload
+        with tempfile.NamedTemporaryFile(suffix='.jpeg') as tmp:
+            tmp.write(image_file.getbuffer())
+            tmp.seek(0)
+            uploaded_file = client.files.upload(file=tmp.name)
+            files = [uploaded_file]
+
+        model = "gemini-2.0-flash"
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_uri(
+                        file_uri=files[0].uri,
+                        mime_type=files[0].mime_type,
+                    ),
+                    types.Part.from_text(
+                        text=prompt
+                    ),
+                ],
+            ),
+        ]
+
+        generate_content_config = types.GenerateContentConfig(
+            temperature=1,
+            top_p=0.95,
+            top_k=40,
+            max_output_tokens=8192,
+            response_mime_type="text/plain",
+        )
+
+        response = ""
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        ):
+            response += chunk.text
+
+        return response
+
+    except Exception as e:
+        return f"An error occurred: {e}"
 
 def main():
-    """
-    This function is the main entry point of the application. It sets up the Groq client, the Streamlit interface, and handles the chat interaction.
-    """
+    st.set_page_config(layout="wide")
+    st.title("Gemini Image-to-Text Generator")
 
-    # Get Groq API key
-    # groq_api_key = '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'
-    groq_api_key = config.GROQ_API_KEY
+    st.header("Upload an Image and Generate Text")
 
-    # Display the Groq logo
-    spacer, col = st.columns([5, 1])  
-    with col:  
-        st.image('groqcloud_darkmode.png')
-
-    # The title and greeting message of the Streamlit application
-    st.title("Welcome to my AI tool!")
-    st.write("Let's start our conversation!")
-
-    # Add customization options to the sidebar
-    st.sidebar.title('Customization')
-    system_prompt = st.sidebar.text_input("System prompt:")
-    model = st.sidebar.selectbox(
-        'Choose a model',
-        [ 'llama-3.3-70b-versatile','deepseek-r1-distill-llama-70b','gemma2-9b-it', 'llama-3.1-8b-instant', 'llama3-70b-8192', 'llama3-8b-8192']
-    )
-    conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value = 5)
-
-    memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
-
-    user_question = st.text_area("Please ask a question:",height=200)
-
-    # session state variable
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history=[]
-    else:
-        for message in st.session_state.chat_history:
-            memory.save_context(
-                {'input':message['human']},
-                {'output':message['AI']}
-                )
-
-
-    # Initialize Groq Langchain chat object and conversation
-    groq_chat = ChatGroq(
-            groq_api_key=groq_api_key, 
-            model_name=model
-    )
-
-    # If the user has asked a question,
-    if user_question:
-
-        # Construct a chat prompt template using various components
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                SystemMessage(
-                    content=system_prompt
-                ),  # This is the persistent system prompt that is always included at the start of the chat.
-
-                MessagesPlaceholder(
-                    variable_name="chat_history"
-                ),  # This placeholder will be replaced by the actual chat history during the conversation. It helps in maintaining context.
-
-                HumanMessagePromptTemplate.from_template(
-                    "{human_input}"
-                ),  # This template is where the user's current input will be injected into the prompt.
-            ]
+    with st.form("image_form"):
+        image_file = st.file_uploader(
+            "Upload an image file",
+            type=['jpeg', 'jpg', 'png'],
+            help="Upload an image file to generate text based on its content."
         )
 
-        # Create a conversation chain using the LangChain LLM (Language Learning Model)
-        conversation = LLMChain(
-            llm=groq_chat,  # The Groq LangChain chat object initialized earlier.
-            prompt=prompt,  # The constructed prompt template.
-            verbose=True,   # Enables verbose output, which can be useful for debugging.
-            memory=memory,  # The conversational memory object that stores and manages the conversation history.
+        prompt = st.text_area(
+            "Enter your prompt or description",
+            placeholder="Describe the content of the image and explain its significance...",
+            height=100
         )
 
-        # The chatbot's answer is generated by sending the full prompt to the Groq API.
-        response = conversation.predict(human_input=user_question)
-        message = {'human':user_question,'AI':response}
-        st.session_state.chat_history.append(message)
-        # st.write("chatbot:\n", response)
+        submit_button = st.form_submit_button(label='Generate')
 
-        # # Display the previous answer
-        # if len(st.session_state.chat_history) > 1:
-        #     # Separate the previous answer from the current answer
-        #     st.markdown("---")
-        #     st.write("Previous answer:\n", st.session_state.chat_history[-2]['AI'])
-        # else:
-        #     st.write("")
-
-        for i, chat in enumerate(reversed(st.session_state.chat_history)):
-            if i == 0:
-                st.write(f"**Chatbot:** {chat['AI']}")
-            else:
-                st.write(f"**User:** {chat['human']}")
-                st.write(f"**Chatbot:** {chat['AI']}")
-            st.markdown("---")
+    if submit_button and image_file:
+        response = generate_response(image_file, prompt)
+        st.header("Generated Response:")
+        st.code(response)
 
 if __name__ == "__main__":
     main()
