@@ -6,7 +6,7 @@ import tempfile
 def generate_response(image_file, prompt):
     try:
         client = genai.Client(
-            api_key='AIzaSyDBvuL_-rHm8M9Vi-YOYqnbSs0Wcj3gVL',
+            api_key='AIzaSyDBvuL_-rHm8M9Vi-YOYqnbSs0Wcj3gVLA',
         )
 
         # Create a temporary file to upload
